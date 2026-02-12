@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Eats - Firestore Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .logo span {
+            color: #ffa500;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .auth-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-info {
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #ff5252;
+        }
+
+        .btn-secondary {
+            background-color: #ffa500;
+        }
+
+        .hero {
+            background: linear-gradient(rgba(255, 107, 107, 0.8), rgba(255, 165, 0, 0.8));
+            height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            margin-top: 70px;
+        }
+
+        .hero h1 {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 50px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .menu-item-image {
+            height: 200px;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+
+        .menu-item-content {
+            padding: 20px;
+        }
+
+        .menu-item-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .menu-item-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .menu-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .add-to-cart-btn {
+            padding: 10px 25px;
+            background-color: #ffa500;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .error-message {
+            background-color: #ffe6e6;
+            color: #cc0000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .orders-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .order-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .cart-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Street<span>Eats</span></div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#orders" id="ordersLink" style="display:none;">My Orders</a></li>
+            </ul>
+            <div class="auth-section">
+                <div class="user-info" id="userInfo">
+                    <div class="cart-icon" onclick="openCart()">
+                        🛒<span class="cart-count" id="cartCount">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
+                </div>
+                <div id="authButtons">
+                    <button class="btn" onclick="openLoginModal()">Login</button>
+                    <button class="btn btn-secondary" onclick="openSignupModal()">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div>
+            <h1>Authentic Street Food</h1>
+            <p>Order Online - Data from Firestore!</p>
+        </div>
+    </section>
+
+    <section id="menu" class="section">
+        <h2 class="section-title">Our Menu (From Firestore)</h2>
+        <div class="menu-grid" id="menuGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading menu from Firestore...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="orders" class="section" style="display:none;">
+        <h2 class="section-title">My Orders</h2>
+        <div class="orders-container" id="ordersContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading orders...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+            <h2>Login</h2>
+            <div class="error-message" id="loginError"></div>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn" style="width:100%">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeSignupModal()">&times;</span>
+            <h2>Sign Up</h2>
+            <div class="error-message" id="signupError"></div>
+            <form onsubmit="signup(event)">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="signupName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="signupPhone" required>
+                </div>
+                <button type="submit" class="btn" style="width:100%">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCart()">&times;</span>
+            <h2>Your Cart</h2>
+            <div id="cartItems"></div>
+            <button class="btn" style="width:100%; margin-top:20px" onclick="checkout()">Place Order</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK - COMPAT VERSION ONLY -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgNrwCykkEhzL4m8Z9AO9hJDgt6IyV4VI",
+            authDomain: "street-food-firebase.firebaseapp.com",
+            projectId: "street-food-firebase",
+            storageBucket: "street-food-firebase.firebasestorage.app",
+            messagingSenderId: "255052650784",
+            appId: "1:255052650784:web:d650d0af7851bbf3bd5f45",
+            measurementId: "G-MX3GR77GWF"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        console.log("✅ Firebase initialized successfully!");
+
+        let cart = [];
+        let currentUser = null;
+        let menuItems = [];
+
+        // LOAD MENU FROM FIRESTORE
+        async function loadMenuFromFirestore() {
+            const menuGrid = document.getElementById('menuGrid');
+            
+            try {
+                console.log("📥 Loading menu from Firestore...");
+                const snapshot = await db.collection('menu').get();
+                
+                if (snapshot.empty) {
+                    menuGrid.innerHTML = `
+                        <div class="empty-message">
+                            <h3>No menu items found in Firestore!</h3>
+                            <p>You need to add menu items to the 'menu' collection.</p>
+                            <p><a href="#" onclick="showMenuInstructions()">Click here for instructions</a></p>
+                        </div>
+                    `;
+                    console.log("⚠️ No menu items in Firestore!");
+                    return;
+                }
+
+                menuItems = [];
+                menuGrid.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    menuItems.push({
+                        id: doc.id,
+                        ...item
+                    });
+                });
+
+                console.log(`✅ Loaded ${menuItems.length} menu items from Firestore`);
+
+                // Display menu items
+                menuItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'menu-item';
+                    div.innerHTML = `
+                        <div class="menu-item-image">${item.emoji || '🍽️'}</div>
+                        <div class="menu-item-content">
+                            <h3 class="menu-item-title">${item.name}</h3>
+                            <p class="menu-item-description">${item.description || ''}</p>
+                            <div class="menu-item-footer">
+                                <span class="price">$${Number(item.price).toFixed(2)}</span>
+                                <button class="add-to-cart-btn" onclick="addToCart('${item.id}')">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    menuGrid.appendChild(div);
+                });
+
+            } catch (error) {
+                console.error("❌ Error loading menu:", error);
+                menuGrid.innerHTML = `
+                    <div class="empty-message">
+                        <h3>Error loading menu</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // LOAD ORDERS FROM FIRESTORE
+        async function loadOrdersFromFirestore() {
+            if (!currentUser) return;
+
+            const ordersContainer = document.getElementById('ordersContainer');
+            ordersContainer.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading orders...</p></div>';
+
+            try {
+                console.log("📥 Loading orders from Firestore...");
+                const snapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                if (snapshot.empty) {
+                    ordersContainer.innerHTML = `
+                        <div class="empty-message">
+                            <h3>No orders yet!</h3>
+                            <p>Place your first order to see it here.</p>
+                        </div>
+                    `;
+                    console.log("⚠️ No orders found for this user");
+                    return;
+                }
+
+                ordersContainer.innerHTML = '';
+                console.log(`✅ Loaded ${snapshot.size} orders`);
+
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const orderId = doc.id.substring(0, 8);
+                    const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString() : 'Just now';
+                    
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card';
+                    orderCard.innerHTML = `
+                        <div class="order-header">
+                            <div>
+                                <strong>Order #${orderId}</strong><br>
+                                <small>${date}</small>
+                            </div>
+                            <div class="order-status">${order.status || 'pending'}</div>
+                        </div>
+                        <div>
+                            ${order.items.map(item => `
+                                <div class="cart-item">
+                                    ${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="text-align:right; margin-top:15px; font-weight:bold; font-size:18px;">
+                            Total: $${Number(order.total).toFixed(2)}
+                        </div>
+                    `;
+                    ordersContainer.appendChild(orderCard);
+                });
+
+            } catch (error) {
+                console.error("❌ Error loading orders:", error);
+                ordersContainer.innerHTML = `
+                    <div class="empty-message">
+                        <h3>Error loading orders</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Modal functions
+        function openLoginModal() {
+            console.log("Opening login modal");
+            document.getElementById('loginModal').classList.add('show');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+        }
+
+        function openSignupModal() {
+            console.log("Opening signup modal");
+            document.getElementById('signupModal').classList.add('show');
+        }
+
+        function closeSignupModal() {
+            document.getElementById('signupModal').classList.remove('show');
+        }
+
+        // Auth functions
+        async function login(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                console.log("Attempting login...");
+                await auth.signInWithEmailAndPassword(email, password);
+                closeLoginModal();
+                alert('Login successful!');
+            } catch (error) {
+                console.error("Login error:", error);
+                document.getElementById('loginError').textContent = error.message;
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        async function signup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const phone = document.getElementById('signupPhone').value;
+            
+            try {
+                console.log("Attempting signup...");
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeSignupModal();
+                alert('Account created successfully!');
+            } catch (error) {
+                console.error("Signup error:", error);
+                document.getElementById('signupError').textContent = error.message;
+                document.getElementById('signupError').style.display = 'block';
+            }
+        }
+
+        async function logout() {
+            await auth.signOut();
+            cart = [];
+            updateCartCount();
+            alert('Logged out successfully!');
+        }
+
+        // Cart functions
+        function addToCart(itemId) {
+            if (!currentUser) {
+                alert('Please login to add items to cart');
+                openLoginModal();
+                return;
+            }
+
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+
+            const existingItem = cart.find(c => c.id === itemId);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...item, quantity: 1 });
+            }
+
+            updateCartCount();
+            alert(`${item.name} added to cart!`);
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        function openCart() {
+            updateCartDisplay();
+            document.getElementById('cartModal').classList.add('show');
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').classList.remove('show');
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-message">Your cart is empty</div>';
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                html += `
+                    <div class="cart-item">
+                        <strong>${item.name}</strong> x${item.quantity} - $${itemTotal.toFixed(2)}
+                    </div>
+                `;
+            });
+            html += `<div style="margin-top:20px; font-size:20px; font-weight:bold">Total: $${total.toFixed(2)}</div>`;
+            cartItems.innerHTML = html;
+        }
+
+        async function checkout() {
+            if (!currentUser || cart.length === 0) {
+                alert('Cart is empty or not logged in');
+                return;
+            }
+
+            try {
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                await db.collection('orders').add({
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity
+                    })),
+                    total: total,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                cart = [];
+                updateCartCount();
+                closeCart();
+                alert('Order placed successfully!');
+                loadOrdersFromFirestore();
+            } catch (error) {
+                console.error("Checkout error:", error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function showMenuInstructions() {
+            alert('To add menu items to Firestore:\n\n1. Go to Firebase Console\n2. Click Firestore Database\n3. Create collection: menu\n4. Add documents with fields:\n   - name (string)\n   - description (string)\n   - price (number)\n   - emoji (string)\n   - available (boolean)\n\nSee ADD-MENU-TO-FIRESTORE.md for detailed guide!');
+        }
+
+        // Auth state observer
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authButtons').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('ordersLink').style.display = 'block';
+                console.log("User logged in:", user.email);
+                loadOrdersFromFirestore();
+            } else {
+                currentUser = null;
+                document.getElementById('authButtons').style.display = 'flex';
+                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('ordersLink').style.display = 'none';
+                console.log("User logged out");
+            }
+        });
+
+        // Orders link
+        document.getElementById('ordersLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('orders').style.display = 'block';
+            document.getElementById('menu').style.display = 'none';
+            loadOrdersFromFirestore();
+        });
+
+        // Load menu on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page loaded, loading menu from Firestore...");
+            loadMenuFromFirestore();
+        });
+    </script>
+</body>
+</html>
